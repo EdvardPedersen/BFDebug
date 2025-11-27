@@ -18,18 +18,20 @@ def DAP_Read(pipe, queue):
 class DebugBackend:
     def __init__(self, locals_handler, select_running_line):
         self.use_lldb = False
-        try:
-            self.debugger = subprocess.Popen(["gdb", "-i=dap"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, universal_newlines = True)
-        except FileNotFoundError:
-            print("gdb not found, trying lldb...")
-            self.use_lldb = True
-        if(self.use_lldb):
+        possible_command_lines = [["gdb", "-i=dap"], ["xcrun", "lldb-dap"], ["lldb-dap"]]
+        self.debugger = None
+        for command in possible_command_lines:
+            print(f"Trying to run {" ".join(command)}")
             try:
-                self.debugger = subprocess.Popen(["lldb-dap"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, universal_newlines = True)
+                self.debugger = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = subprocess.PIPE, universal_newlines = True)
             except FileNotFoundError:
-                print("lldb-dap not found, exiting...")
-                exit()
-            
+                print("Unsuccessful, trying next command line...")
+                self.use_lldb = True
+                continue
+            break    
+        if not self.debugger:
+            print("No debugger found, exiting")
+            exit()
         self.stdout = queue.Queue()
         self.reader = threading.Thread(target=DAP_Read, args=(self.debugger.stdout, self.stdout), daemon=True)
         self.reader.start()
