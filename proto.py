@@ -31,7 +31,7 @@ class DebugBackend:
                 exit()
             
         self.stdout = queue.Queue()
-        self.reader = threading.Thread(target=DAP_Read, args=(self.debugger.stdout, self.stdout))
+        self.reader = threading.Thread(target=DAP_Read, args=(self.debugger.stdout, self.stdout), daemon=True)
         self.reader.start()
         self.sequence = 1
         self.locals_handler = locals_handler
