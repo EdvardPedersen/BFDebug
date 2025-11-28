@@ -203,6 +203,8 @@ class DebugFrontend:
         for item in self.trace.get_children():
             self.trace.delete(item)
         for frame in frames:
+            if "source" not in frame:
+                continue
             file = frame["source"]["path"]
             name = frame["source"]["name"]
             line = frame["line"]
